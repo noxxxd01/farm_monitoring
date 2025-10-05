@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
-import mysql from "mysql2/promise";
+
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -17,40 +15,8 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import Link from "next/link";
-import UserMenu from "@/components/user-menu";
-
-async function getCurrentUser() {
-  try {
-    const token = (await cookies()).get("token")?.value;
-    if (!token || !process.env.JWT_SECRET) return null;
-    const payload: any = jwt.verify(token, process.env.JWT_SECRET);
-    const conn = await mysql.createConnection({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASS,
-      database: process.env.DB_NAME,
-    });
-    const [rows] = await conn.execute(
-      "SELECT id, name, email FROM users WHERE id = ? LIMIT 1",
-      [payload.id]
-    );
-    await conn.end();
-    return (
-      (rows as any[])[0] ?? {
-        id: payload.id,
-        name: payload.name,
-        email: payload.email,
-      }
-    );
-  } catch {
-    return null;
-  }
-}
 
 export default async function Page() {
-  const user = await getCurrentUser();
-
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -75,16 +41,6 @@ export default async function Page() {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-
-            {user ? (
-              <UserMenu user={user} />
-            ) : (
-              <div className="ml-auto">
-                <Link href="/signin" className="underline">
-                  Sign in
-                </Link>
-              </div>
-            )}
           </div>
         </header>
 
