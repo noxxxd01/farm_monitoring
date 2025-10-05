@@ -1,6 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
-import { Code } from "lucide-react";
+import {
+  AudioWaveform,
+  BookOpen,
+  Bot,
+  Code,
+  Command,
+  Frame,
+  GalleryVerticalEnd,
+  Gauge,
+  Map,
+  PieChart,
+  Settings2,
+  Table,
+} from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -17,7 +30,6 @@ import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import mysql from "mysql2/promise";
 
-// This is sample data.
 const data = {
   teams: [
     {
@@ -29,7 +41,7 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
       icon: "Gauge",
     },
     {
@@ -38,9 +50,9 @@ const data = {
       icon: "Table",
       isActive: true,
       items: [
-        { title: "Temperature", url: "#" },
-        { title: "Humidity", url: "#" },
-        { title: "Air Quality", url: "#" },
+        { title: "Temperature", url: "/dashboard/data-table" },
+        { title: "Humidity", url: "/dashboard/data-table" },
+        { title: "Air Quality", url: "/dashboard/data-table" },
       ],
     },
     { title: "Sensors", url: "#", icon: "Code" },
@@ -49,10 +61,8 @@ const data = {
       url: "#",
       icon: "Settings2",
       items: [
-        { title: "General", url: "#" },
-        { title: "Team", url: "#" },
-        { title: "Billing", url: "#" },
-        { title: "Limits", url: "#" },
+        { title: "Change Password", url: "#" },
+        { title: "Theme", url: "#" },
       ],
     },
   ],

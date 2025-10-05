@@ -1,58 +1,82 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { AppSidebar } from "@/components/app-sidebar";
+import { AirQualityChart } from "@/components/air-quality";
+import { AlertNotif } from "@/components/alert-notif";
+
+import { TempHumidChart } from "@/components/temp_hum_chart";
+
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+
+// ...existing code...
 
 export default async function Page() {
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4 flex-1">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">
-                    Building Your Application
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        </header>
+  // dynamic data for three cards
+  const metrics = [
+    {
+      id: "temp",
+      title: "Temperature",
+      description: "Current ambient temperature",
+      display: "40°C",
+      sub: "High",
+      percent: 40,
+    },
+    {
+      id: "humidity",
+      title: "Humidity",
+      description: "Current relative humidity",
+      display: "68%",
+      sub: "comfortable",
+      percent: 68,
+    },
+    {
+      id: "air",
+      title: "Air Quality",
+      description: "PM2.5 concentration",
+      display: "12 µg/m³",
+      sub: "Good",
+      percent: 12,
+    },
+  ];
 
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-            <div className="bg-muted/50 aspect-video rounded-xl" />
-            <div className="bg-muted/50 aspect-video rounded-xl" />
-            <div className="bg-muted/50 aspect-video rounded-xl" />
-          </div>
-          <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
+  return (
+    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+      <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+        {metrics.map((m) => (
+          <Card key={m.id} className="shadow-none rounded-xl">
+            <CardHeader>
+              <CardTitle>{m.title}</CardTitle>
+              <CardDescription>{m.description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-5xl font-bold">
+                {m.display}{" "}
+                <span className="text-sm text-muted-foreground">{m.sub}</span>
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Progress value={m.percent} className="w-full" />
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+
+      <TempHumidChart />
+      <div className="grid auto-rows-min gap-4 md:grid-cols-6">
+        <div className="col-span-3 md:col-span-4">
+          <AirQualityChart />
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+        <div className="col-span-2 md:col-span-2">
+          <AlertNotif />
+        </div>
+      </div>
+    </div>
   );
 }
