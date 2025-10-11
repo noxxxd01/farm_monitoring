@@ -22,15 +22,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
-  ChevronLeft,
-  ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  CheckCircle,
-  AlertCircle,
-  Clock,
+  ChevronLeft,
+  ChevronRight,
   Trash2,
   EllipsisVertical,
+  ChevronsUp,
+  ChevronsDown,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -45,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox"; // ShadCN checkbox
 
 // -----------------------------
 // Data Type
@@ -53,9 +53,8 @@ type DataItem = {
   id: number;
   temperature: number;
   humidity: number;
-  airQuality: number;
+  air_quality: number;
   timestamp: string;
-  action: string;
 };
 
 // -----------------------------
@@ -63,9 +62,40 @@ type DataItem = {
 // -----------------------------
 const columns: ColumnDef<DataItem>[] = [
   {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all rows"
+        className="shadow-none"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        className="shadow-none"
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label={`Select row ${row.original.id}`}
+      />
+    ),
+  },
+  {
     accessorKey: "id",
-    header: "ID",
+    header: ({ column }) => (
+      <div
+        className="flex items-center gap-1 cursor-pointer select-none"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        <span>ID</span>
+        {column.getIsSorted() === "asc" && <ChevronsUp className="w-4 h-4" />}
+        {column.getIsSorted() === "desc" && (
+          <ChevronsDown className="w-4 h-4" />
+        )}
+      </div>
+    ),
     cell: ({ row }) => <div className="pl-2">{row.original.id}</div>,
+    enableSorting: true,
   },
   {
     accessorKey: "temperature",
@@ -78,30 +108,24 @@ const columns: ColumnDef<DataItem>[] = [
     cell: ({ row }) => <div className="pl-2">{row.original.humidity}</div>,
   },
   {
-    accessorKey: "airQuality",
+    accessorKey: "air_quality",
     header: "Air Quality",
-    cell: ({ row }) => <div className="pl-2">{row.original.airQuality}</div>,
+    cell: ({ row }) => <div className="pl-2">{row.original.air_quality}</div>,
   },
   {
     accessorKey: "timestamp",
     header: "Timestamp",
-    cell: ({ row }) => <div className="pl-2">{row.original.timestamp}</div>,
-  },
-  {
-    accessorKey: "action",
-    header: "Status",
     cell: ({ row }) => {
-      const action = row.original.action;
-      let Icon;
-      let color: "green" | "red" | "blue" = "blue";
-      if (action === "Normal") (Icon = CheckCircle), (color = "green");
-      else if (action === "Alert") (Icon = AlertCircle), (color = "red");
-      else (Icon = Clock), (color = "blue");
-
+      const date = new Date(row.original.timestamp);
       return (
-        <div className="flex items-center gap-2 pl-2">
-          <Icon className={`h-4 w-4 text-${color}-500`} />
-          <span>{action}</span>
+        <div className="pl-2">
+          {date.toLocaleString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
         </div>
       );
     },
@@ -139,21 +163,19 @@ export function DataTable({
 }: {
   columnVisibility: VisibilityState;
 }) {
-  // -----------------------------
-  // State for data (client-only)
-  // -----------------------------
   const [data, setData] = React.useState<DataItem[]>([]);
 
   React.useEffect(() => {
-    const generatedData: DataItem[] = Array.from({ length: 20 }, (_, i) => ({
-      id: i + 1,
-      temperature: 20 + Math.floor(Math.random() * 10),
-      humidity: 50 + Math.floor(Math.random() * 15),
-      airQuality: 200 + Math.floor(Math.random() * 300),
-      timestamp: `2025-10-05 12:${(i * 5).toString().padStart(2, "0")}:00`,
-      action: i % 3 === 0 ? "Normal" : i % 3 === 1 ? "Alert" : "Checked",
-    }));
-    setData(generatedData);
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/sensor/all");
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchData();
   }, []);
 
   const [rowSelection, setRowSelection] = React.useState({});
@@ -163,7 +185,7 @@ export function DataTable({
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
-    pageSize: 5,
+    pageSize: 10,
   });
 
   const table = useReactTable({
@@ -211,7 +233,7 @@ export function DataTable({
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="align-middle h-14 px-4">
+                    <TableCell key={cell.id} className="align-middle h-14">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -249,7 +271,7 @@ export function DataTable({
               <SelectValue />
             </SelectTrigger>
             <SelectContent side="top">
-              {[5, 10, 20].map((size) => (
+              {[10, 20].map((size) => (
                 <SelectItem key={size} value={`${size}`}>
                   {size}
                 </SelectItem>

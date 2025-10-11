@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import * as React from "react";
@@ -29,71 +30,59 @@ import {
 
 export const description = "Temperature and humidity per hour (last 24 hours)";
 
-const chartConfig = {
-  temp: {
-    label: "Temperature (°C)",
-    color: "var(--chart-temp, #ff7a59)",
-  },
-  humid: {
-    label: "Humidity (%)",
-    color: "var(--chart-humid, #4aa3ff)",
-  },
-} satisfies ChartConfig;
+const chartConfig: ChartConfig = {
+  temp: { label: "Temperature (°C)", color: "var(--chart-temp, #ff7a59)" },
+  humid: { label: "Humidity (%)", color: "var(--chart-humid, #4aa3ff)" },
+};
 
-function generateHourlyData(hours = 24) {
-  const now = new Date();
-  const data: { hour: string; temp: number; humid: number }[] = [];
-  for (let i = hours - 1; i >= 0; i--) {
-    const d = new Date(now.getTime() - i * 60 * 60 * 1000);
-    const hourLabel = d.getHours().toString().padStart(2, "0") + ":00";
-    // simple sinusoidal mock: warmer midday, cooler night
-    const tBase =
-      18 + 6 * Math.sin((d.getHours() / 24) * Math.PI * 2 - Math.PI / 2);
-    const temp = Math.round((tBase + (Math.random() - 0.5) * 1.5) * 10) / 10;
-    // humidity roughly inverse to temperature in this mock
-    const hBase =
-      60 - 10 * Math.sin((d.getHours() / 24) * Math.PI * 2 - Math.PI / 2);
-    const humid = Math.round((hBase + (Math.random() - 0.5) * 3) * 10) / 10;
-    data.push({ hour: hourLabel, temp, humid });
-  }
-  return data;
+interface DataPoint {
+  time_slot: string;
+  temp: number | null;
+  humid: number | null;
 }
 
 export function TempHumidChart() {
-  const chartData = React.useMemo(() => generateHourlyData(24), []);
+  const [chartData, setChartData] = React.useState<DataPoint[]>([]);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/sensor/hourly"); // API returning time_slot
+        if (!res.ok) throw new Error("Failed to fetch data");
+        const json: DataPoint[] = await res.json();
+
+        setChartData(json);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchData();
+
+    const interval = setInterval(fetchData, 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Card className="shadow-none">
       <CardHeader>
-        <CardTitle>Temperature & Humidity (hourly)</CardTitle>
+        <CardTitle>Temperature & Humidity (last 24h)</CardTitle>
         <CardDescription>
-          Last 24 hours — temperature in °C and relative humidity %
+          Temperature in °C and relative humidity % — including half-hour
+          readings
         </CardDescription>
       </CardHeader>
 
       <CardContent>
         <ChartContainer config={chartConfig}>
-          <AreaChart
-            accessibilityLayer
-            data={chartData}
-            margin={{
-              left: 12,
-              right: 12,
-            }}
-          >
+          <AreaChart data={chartData} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="hour"
+              dataKey="time_slot"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value: string) => value}
             />
-
-            {/* legend so series are clear */}
-            <Legend verticalAlign="top" align="right" />
-
-            {/* separate Y axes so temp and humidity are not stacked */}
             <YAxis yAxisId="temp" domain={[0, "dataMax + 5"]}>
               <Label
                 value="Temperature (°C)"
@@ -102,7 +91,6 @@ export function TempHumidChart() {
                 style={{ textAnchor: "middle" }}
               />
             </YAxis>
-
             <YAxis yAxisId="humid" orientation="right" domain={[0, 100]}>
               <Label
                 value="Humidity (%)"
@@ -111,7 +99,7 @@ export function TempHumidChart() {
                 style={{ textAnchor: "middle" }}
               />
             </YAxis>
-
+            <Legend verticalAlign="top" align="right" />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
 
             <defs>
@@ -160,19 +148,6 @@ export function TempHumidChart() {
           </AreaChart>
         </ChartContainer>
       </CardContent>
-
-      <CardFooter>
-        <div className="flex w-full items-start gap-2 text-sm">
-          <div className="grid gap-2">
-            <div className="flex items-center gap-2 leading-none font-medium">
-              Hourly readings — last 24h <TrendingUp className="h-4 w-4" />
-            </div>
-            <div className="text-muted-foreground flex items-center gap-2 leading-none">
-              Updated live on the client
-            </div>
-          </div>
-        </div>
-      </CardFooter>
     </Card>
   );
 }

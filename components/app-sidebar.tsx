@@ -55,14 +55,13 @@ const data = {
         { title: "Air Quality", url: "/dashboard/data-table" },
       ],
     },
-    { title: "Sensors", url: "#", icon: "Code" },
     {
       title: "Settings",
       url: "#",
       icon: "Settings2",
       items: [
-        { title: "Change Password", url: "#" },
-        { title: "Theme", url: "#" },
+        { title: "Change Password", url: "/dashboard/change-password" },
+        { title: "Theme", url: "/dashboard/change-theme" },
       ],
     },
   ],

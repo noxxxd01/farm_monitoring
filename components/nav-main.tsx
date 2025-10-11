@@ -1,5 +1,6 @@
 "use client";
-import { ChevronRight, type LucideIcon } from "lucide-react";
+
+import { ChevronRight } from "lucide-react";
 import { Gauge, Table, Code, Settings2 } from "lucide-react";
 import {
   Collapsible,
@@ -23,7 +24,6 @@ const ICONS: Record<string, React.ElementType> = {
   Table,
   Code,
   Settings2,
-  // add other icons you use
 };
 
 export function NavMain({
@@ -32,7 +32,7 @@ export function NavMain({
   items: {
     title: string;
     url: string;
-    icon?: string; // now string key
+    icon?: string;
     isActive?: boolean;
     items?: { title: string; url: string }[];
   }[];
@@ -49,9 +49,11 @@ export function NavMain({
           if (!hasChildren) {
             return (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton tooltip={item.title}>
-                  {Icon ? <Icon /> : null}
-                  <span>{item.title}</span>
+                <SidebarMenuButton asChild tooltip={item.title}>
+                  <Link href={item.url}>
+                    {Icon ? <Icon /> : null}
+                    <span>{item.title}</span>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             );
